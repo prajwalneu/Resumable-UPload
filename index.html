@@ -1,0 +1,59 @@
+<html>
+	<form action="upload" enctype="multipart/form-data" method="post">
+
+	  Upload image:
+	  <input id="image-file" type="file" name="file" />
+	  <input type="submit" value="Upload" />
+
+
+	</form>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+	var loop =1;
+	  $('#image-file').on('change', async function() {
+		
+		var data = await $(this)[0].files[0].arrayBuffer();		
+		
+		console.log(data.byteLength);
+		uploadData(data,0,3276800)
+	  });
+	  
+	 
+	  
+	  
+	  function uploadData(arr, start, take) {
+		 
+		  var chunk = arr.slice(start, take);
+		  console.log(chunk);
+		  var ctRng = 'bytes ' + (start) + '-' + (start==take?take:take - 1) + '/' + arr.byteLength;
+		  
+		  $.ajax({
+				   url: "{upload session url}",
+				   data: chunk,
+				   headers:{
+						'Authorization': 'Bearer {token}',
+						'Content-Range': ctRng,
+					    'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+				   },
+				   type: 'PUT',
+				   processData: false,
+				   success: function(resp){				   
+						if(resp.nextExpectedRanges&& resp.nextExpectedRanges.length){
+							var ab = resp.nextExpectedRanges[0].split('-');	
+							loop++;							
+							uploadData(arr,(loop-1)*3276800,(loop)*3276800 >arr.byteLength ? arr.byteLength :(loop)*3276800 );
+						}
+						console.log(resp);
+				   },
+				   error: function(resp){
+							console.log(resp.responseText);
+				   }
+				}).done(function(resp){
+					//console.log(resp);
+				});
+		}
+		
+		
+		
+	</script>
+</html>
